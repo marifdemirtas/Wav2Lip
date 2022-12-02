@@ -11,6 +11,7 @@ from torch import optim
 import torch.backends.cudnn as cudnn
 from torch.utils import data as data_utils
 import numpy as np
+from torch.utils.tensorboard import SummaryWriter 
 
 from glob import glob
 
@@ -28,6 +29,7 @@ parser.add_argument('--checkpoint_path', help='Resume from this checkpoint', def
 
 args = parser.parse_args()
 
+writer = SummaryWriter()
 
 global_step = 0
 global_epoch = 0
@@ -255,6 +257,14 @@ def train(device, model, train_data_loader, test_data_loader, optimizer,
 
             prog_bar.set_description('L1: {}, Sync Loss: {}'.format(running_l1_loss / (step + 1),
                                                                     running_sync_loss / (step + 1)))
+            
+            writer.add_scalar("Loss/L1", running_l1_loss / (step + 1), global_step)
+            writer.add_scalar("Loss/Sync", running_sync_loss / (step + 1), global_step)
+            writer.add_scalar("Loss/Total", 
+                hparams.syncnet_wt * (running_sync_loss / (step + 1)),
+                (1 - hparams.syncnet_wt) * (running_l1_loss / (step + 1)),
+            global_step)
+            writer.add_scalar("Epoch/Step", global_epoch, global_step)
 
         global_epoch += 1
         
@@ -288,6 +298,8 @@ def eval_model(test_data_loader, global_step, device, model, checkpoint_dir):
                 averaged_recon_loss = sum(recon_losses) / len(recon_losses)
 
                 print('L1: {}, Sync loss: {}'.format(averaged_recon_loss, averaged_sync_loss))
+                writer.add_scalar("Test/L1", averaged_recon_loss, global_step)
+                writer.add_scalar("Test/Sync", averaged_sync_loss, global_step)
 
                 return averaged_sync_loss
 
@@ -372,3 +384,4 @@ if __name__ == "__main__":
               checkpoint_dir=checkpoint_dir,
               checkpoint_interval=hparams.checkpoint_interval,
               nepochs=hparams.nepochs)
+    writer.flush()
