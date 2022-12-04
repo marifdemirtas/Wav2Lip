@@ -270,7 +270,7 @@ def train(device, model, train_data_loader, test_data_loader, optimizer,
         
 
 def eval_model(test_data_loader, global_step, device, model, checkpoint_dir):
-    eval_steps = 700
+    eval_steps = 10
     print('Evaluating for {} steps'.format(eval_steps))
     sync_losses, recon_losses = [], []
     step = 0
@@ -351,8 +351,8 @@ if __name__ == "__main__":
     checkpoint_dir = args.checkpoint_dir
 
     # Dataset and Dataloader setup
-    train_dataset = Dataset('train')
-    test_dataset = Dataset('val')
+    train_dataset = Dataset('train-tr')
+    test_dataset = Dataset('val-tr')
 
     train_data_loader = data_utils.DataLoader(
         train_dataset, batch_size=hparams.batch_size, shuffle=True,
